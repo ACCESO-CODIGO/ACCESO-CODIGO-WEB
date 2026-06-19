@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acceso Codigo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f0f0f0;
+    font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  #loading-screen {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+  }
+  #loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #loading-screen .load-text {
+    font-weight: 900;
+    font-size: clamp(18px, 4.2vw, 26px);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: relative;
+    background: linear-gradient(90deg, #ccc 0%, #111 50%, #ccc 100%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmerSweep 1.8s linear infinite;
+  }
+  @keyframes shimmerSweep {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  #loading-screen .load-bar-track {
+    width: 220px;
+    height: 5px;
+    background: #ececec;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  #loading-screen .load-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #111;
+    border-radius: 4px;
+    animation: fillBar 4s linear forwards;
+  }
+  @keyframes fillBar { from { width: 0%; } to { width: 100%; } }
+  #loading-screen .load-pct {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #888;
+  }
+  #loading-screen .load-ring {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px solid #ececec;
+    border-top-color: #111;
+    border-right-color: #111;
+    animation: spin 1s cubic-bezier(0.6,0.1,0.4,0.9) infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  nav {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+  }
+  .logo {
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #111;
+    text-transform: uppercase;
+  }
+  .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
+  .hamburger span { display: block; width: 26px; height: 3px; background: #111; border-radius: 2px; }
+
+  .wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .hero-card {
+    background: #111;
+    border-radius: 20px;
+    padding: 48px 24px 40px;
+    text-align: center;
+    color: #fff;
+  }
+  .hero-card h1 {
+    font-size: clamp(22px, 5vw, 36px);
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .asterisks {
+    font-size: clamp(36px, 9vw, 64px);
+    letter-spacing: 0.12em;
+    font-weight: 900;
+    margin-bottom: 32px;
+    line-height: 1;
+    transition: all 0.4s ease;
+  }
+  .reveal-btn {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: opacity 0.3s;
+  }
+  .reveal-btn span.label {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    padding: 12px 20px;
+    font-family: Arial, sans-serif;
+  }
+  .reveal-btn span.arrow {
+    background: #fff;
+    color: #111;
+    font-size: 16px;
+    font-weight: 900;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .glass-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    background: linear-gradient(135deg, rgba(25,55,200,0.5), rgba(0,0,0,0.92));
+    border: 1px solid rgba(80,120,255,0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 20px rgba(10,20,60,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  .glass-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 26px rgba(10,20,60,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .glass-btn:active { transform: translateY(0); }
+  .glass-btn .glass-btn-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .glass-btn .glass-btn-arrow {
+    color: rgba(220,230,255,0.9);
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card {
+    background: #111;
+    border-radius: 16px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .card:hover { background: #1a1a1a; }
+
+  .card-header { padding: 28px 24px; }
+
+  .card-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .card-title {
+    font-size: clamp(22px, 5vw, 30px);
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1.1;
+  }
+  .card-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 14px 0;
+  }
+  .card-sub {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #888;
+    line-height: 1.7;
+  }
+  .card-1 .card-title-main {
+    font-size: clamp(26px, 6vw, 36px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 14px;
+  }
+
+  .card-toggle-hint {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #555;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-toggle-hint .arrow-hint {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 13px;
+  }
+  .card.open .card-toggle-hint .arrow-hint { transform: rotate(180deg); }
+
+  .faq-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+  }
+  .card.open .faq-panel { max-height: 99999px; }
+
+  .faq-inner {
+    background: #f7f6f2;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+  }
+
+  .faq-item { border-bottom: 1px solid #e5e3dc; }
+  .faq-item:last-child { border-bottom: none; }
+
+  .faq-q {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: clamp(14px, 3.5vw, 17px);
+    font-weight: 900;
+    text-transform: none;
+    color: #111;
+    padding: 20px 24px 18px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    user-select: none;
+    line-height: 1.35;
+  }
+  .faq-q:hover { background: #f0ede5; }
+  .faq-q .faq-icon {
+    font-size: 22px;
+    font-weight: 300;
+    color: #aaa;
+    flex-shrink: 0;
+    transition: transform 0.25s;
+    margin-top: 1px;
+  }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); color: #111; }
+  .faq-item.open .faq-q { background: #f0ede5; }
+
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.45s ease;
+  }
+  .faq-item.open .faq-a { max-height: 9999px; }
+
+  .faq-a-inner {
+    padding: 4px 24px 32px;
+    background: #f7f6f2;
+  }
+
+  .faq-img-placeholder {
+    width: 100%;
+    height: 180px;
+    background: #e8e5dc;
+    border-radius: 10px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .faq-img-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  .faq-img-placeholder .img-label {
+    position: absolute;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #aaa;
+  }
+
+  .faq-tag {
+    display: inline-block;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #888;
+    background: #e0ddd5;
+    border-radius: 4px;
+    padding: 4px 9px;
+    margin-bottom: 18px;
+  }
+
+  /* Texto principal */
+  .faq-text {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(15px, 3.5vw, 17px);
+    font-weight: 400;
+    color: #333;
+    line-height: 1.9;
+  }
+
+  /* Subtítulos dentro de la respuesta */
+  .faq-text .subtitulo {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    color: #111;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    display: block;
+    margin-top: 22px;
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+    border-bottom: 1.5px solid #dddad2;
+  }
+
+  /* Recuadro destacado — tip o dato clave */
+  .faq-tip {
+    background: #111;
+    color: #fff;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .faq-tip .tip-label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  /* Lista tipo checklist */
+  .faq-list {
+    list-style: none;
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .faq-list li {
+    font-family: Georgia, serif;
+    font-size: clamp(14px, 3vw, 16px);
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .faq-list li .bullet {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: #111;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+    margin-top: 2px;
+  }
+  .faq-list li .bullet.check::after { content: '✓'; }
+  .faq-list li .bullet.num { font-size: 9px; }
+
+  @media (min-width: 640px) {
+    nav { padding: 20px 32px; }
+    .wrapper { padding: 24px 24px 48px; }
+    .hero-card { padding: 60px 40px 52px; }
+    .cards-grid { grid-template-columns: repeat(3, 1fr); }
+    .card-header { padding: 28px 22px 20px; }
+    .faq-q { padding: 22px 28px 20px; }
+    .faq-a-inner { padding: 4px 28px 36px; }
+    .faq-img-placeholder { height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="load-ring"></div>
+  <div class="load-text" id="load-text"></div>
+  <div class="load-bar-track"><div class="load-bar-fill"></div></div>
+  <div class="load-pct" id="load-pct">0%</div>
+</div>
+
+
+<nav>
+  <div class="logo">Acceso Codigo</div>
+  <div class="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="wrapper">
+
+  <div class="hero-card">
+    <h1>Codigo de la Semana</h1>
+    <div class="asterisks" id="codigo-display">* * * * * * *</div>
+    <button class="reveal-btn" onclick="revelarCodigo(this)">
+      <span class="label">revelar codigo</span>
+      <span class="arrow">&#8250;</span>
+    </button>
+  </div>
+
+  <a href="https://www.dropbox.com/scl/fi/96tlix00tuktubaekt2lb/METODO-OCULTO-PASO-A-PASO-ACCESO-CODIGO.pdf?rlkey=hsij4zbi4c0yfaa1y9bru4j1n&st=mvywqbto&dl=1" class="glass-btn" target="_blank" rel="noopener">
+    <span class="glass-btn-text">
+      Descargar método oculto - click aquí
+    </span>
+    <span class="glass-btn-arrow">&#8250;</span>
+  </a>
+
+  <div class="cards-grid">
+
+    <!-- ═══════════════════════════════════════════
+         CARD 1 — INSTALACION DESDE 0
+    ════════════════════════════════════════════ -->
+    <div class="card card-1" onclick="toggleCard(this)">
+      <div class="card-header">
+        <div class="card-title-main">INGRESA</div>
+        <hr class="card-divider">
+        <div class="card-sub">INSTALACION</div>
+        <div class="card-title">DESDE 0</div>
+        <div class="card-toggle-hint">Ver guía de instalación <span class="arrow-hint">▼</span></div>
+      </div>
+      <div class="faq-panel">
+        <div class="faq-inner">
+
+          <!-- FAQ 1.1 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué necesito para empezar desde cero? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/7xB9X1k7/1.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Instalación · Paso 1 de 6</span>
+              <p class="faq-text">
+                Lo primero es saber con qué dispositivo vas a trabajar. Hay tres opciones principales y cada una funciona distinto:
+              </p>
+              <ul class="faq-list" style="margin-top:16px;">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black,sans-serif;font-size:0.9em;">Smart TV con Android TV o Google TV</strong> — la opción más directa si ya tenés el televisor. Son los TV de marcas como TCL, Philips, Sony o Hisense que ya tienen el sistema de Android integrado. Si en el menú del TV ves la Google Play Store, es Android TV.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black,sans-serif;font-size:0.9em;">Amazon Fire TV Stick</strong> — un dispositivo del tamaño de un pendrive que se conecta al HDMI de cualquier TV, incluso si tu TV es viejo o "tonto". Lo comprás, lo enchufás y en 15 minutos tenés todo. Cuesta entre 25 y 50 dólares según el modelo.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black,sans-serif;font-size:0.9em;">Chromecast con Google TV</strong> — la versión de Google. Igual al Fire TV Stick en concepto, pero usa el sistema de Google. Si ya tenés cuenta de Gmail y usás Android en el celular, la integración es muy natural.</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">💡 Dato importante</span>
+                Si tu Smart TV tiene su propio sistema propietario — por ejemplo un Samsung con Tizen o un LG con WebOS — muchas apps no van a estar disponibles o van a tener funciones limitadas. En ese caso, lo más inteligente es comprar un Fire TV Stick o un Chromecast y usarlo en el HDMI: tu TV pasa a ser solo la pantalla, y el stick hace todo el trabajo.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 1.2 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Cómo instalo apps que no están en la tienda oficial? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/KjTg5qrS/2.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Instalación · Paso 2 de 6</span>
+              <p class="faq-text">
+                Algunas apps no están en la tienda oficial del dispositivo porque no pagaron el registro, no cumplen los requisitos técnicos de la tienda, o simplemente son versiones pensadas para otro mercado. Para instalarlas igual, existe un método llamado <em>sideloading</em> — que en español sería "instalar de lado", es decir, por fuera de la tienda. La herramienta que lo hace posible se llama <strong style="font-family:Arial Black;font-size:0.9em;">Downloader</strong>.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Cómo funciona Downloader</span>
+              <p class="faq-text">
+                Downloader es una app gratuita y legal, disponible en la Amazon App Store (Fire TV) y en Google Play (Android TV). Lo que hace es simple: vos le das una dirección de internet (URL) y ella descarga ese archivo en tu dispositivo. Ese archivo que descargás es un <strong style="font-family:Arial Black;font-size:0.9em;">APK</strong> — que es exactamente lo mismo que un archivo .exe en Windows o .dmg en Mac: el instalador de una app.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Paso a paso para habilitarlo</span>
+              <ul class="faq-list">
+                <li><span class="bullet num">1</span><span>Abrí los <strong style="font-family:Arial Black;font-size:0.9em;">Ajustes</strong> de tu dispositivo.</span></li>
+                <li><span class="bullet num">2</span><span>Buscá la opción <strong style="font-family:Arial Black;font-size:0.9em;">"Mi Fire TV"</strong> (en Fire Stick) o <strong style="font-family:Arial Black;font-size:0.9em;">"Seguridad y restricciones"</strong> (en Android TV).</span></li>
+                <li><span class="bullet num">3</span><span>Activá <strong style="font-family:Arial Black;font-size:0.9em;">"Fuentes desconocidas"</strong> o "Apps de fuentes desconocidas". En algunos modelos te pide que lo actives específicamente para Downloader.</span></li>
+                <li><span class="bullet num">4</span><span>Instalá Downloader desde la tienda oficial.</span></li>
+                <li><span class="bullet num">5</span><span>Abrís Downloader, escribís la URL del APK que querés, y él lo descarga e instala automáticamente.</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">⚠️ Ojo con esto</span>
+                Activar "fuentes desconocidas" no es peligroso en sí mismo — es como habilitar la instalación manual en cualquier sistema operativo. El riesgo está en de dónde bajás el APK. Solo descargá APKs de los sitios oficiales de cada app (el sitio web de Pluto TV, de Vix, etc.), nunca de sitios aleatorios o foros.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 1.3 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Cómo configuro el Fire TV Stick desde cero? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/x8hHGFCQ/3.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Fire TV Stick · Configuración completa</span>
+              <p class="faq-text">
+                El Fire TV Stick es el dispositivo más vendido para esto y tiene un proceso de configuración muy guiado. Lo que sigue es el paso a paso completo, incluyendo las partes que la gente suele saltear y después le generan problemas.
+              </p>
+              <ul class="faq-list" style="margin-top:16px;">
+                <li><span class="bullet num">1</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Conectá el stick al HDMI del TV y enchufalo a la corriente.</strong> Importante: usá el cargador que viene en la caja, no el USB del televisor. El USB del TV generalmente no da suficiente energía y el dispositivo anda lento o con fallas.</span></li>
+                <li><span class="bullet num">2</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Seleccioná la entrada HDMI correcta.</strong> Con el control del televisor buscá la opción "Fuente" o "Input" y elegí el HDMI donde conectaste el stick. Debería aparecer la pantalla de Amazon automáticamente.</span></li>
+                <li><span class="bullet num">3</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Sincronizá el control remoto.</strong> Mantenés presionado el botón de inicio (el ícono de casa) hasta que el control se vincule. Si no responde, poné las pilas correctamente y repetí.</span></li>
+                <li><span class="bullet num">4</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Elegí idioma y conectate al Wi-Fi.</strong> Necesitás la contraseña de tu red. Recordá que el Fire Stick anda mejor con Wi-Fi de 5 GHz si tu router lo tiene — es más rápido y estable para streaming.</span></li>
+                <li><span class="bullet num">5</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Iniciá sesión con una cuenta de Amazon.</strong> Si no tenés, creá una gratis en amazon.com — solo necesitás un email. La cuenta es gratuita, no tenés que poner ninguna tarjeta de crédito si no querés comprar nada.</span></li>
+                <li><span class="bullet num">6</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Dejá que se actualice.</strong> La primera vez puede tardar entre 5 y 15 minutos actualizando el sistema. No lo apagues ni lo reinicies en este proceso.</span></li>
+                <li><span class="bullet num">7</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Instalá las apps gratuitas</strong> desde la tienda de Amazon o usá Downloader para las que no aparezcan.</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">💡 Tip de velocidad</span>
+                Si el Fire Stick anda lento después de configurarlo, apagalo y volvé a encenderlo. La primera semana suele hacer actualizaciones en segundo plano que consumen recursos. Después de eso queda fluido.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 1.4 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Cómo configuro el Chromecast con Google TV? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/F49tMM0f/4.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Chromecast · Configuración completa</span>
+              <p class="faq-text">
+                El Chromecast con Google TV es diferente a los Chromecasts viejos — esos se manejaban solo desde el celular. Este tiene control remoto propio y una interfaz completa como el Fire Stick. La diferencia principal con Amazon es que todo se gestiona desde la app <strong style="font-family:Arial Black;font-size:0.9em;">Google Home</strong> en tu celular durante la configuración inicial.
+              </p>
+              <ul class="faq-list" style="margin-top:16px;">
+                <li><span class="bullet num">1</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Conectá el Chromecast al HDMI</strong> y al cargador de corriente. Igual que con el Fire Stick: usá el adaptador de corriente incluido, no el USB del TV.</span></li>
+                <li><span class="bullet num">2</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Seleccioná la entrada HDMI</strong> en tu televisor.</span></li>
+                <li><span class="bullet num">3</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Descargá Google Home</strong> en tu celular (Android o iPhone). La pantalla del Chromecast te va a mostrar un código que tenés que ingresar en la app para vincularlos.</span></li>
+                <li><span class="bullet num">4</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Conectate al Wi-Fi</strong> desde la app. El celular le "pasa" la contraseña al Chromecast automáticamente — no tenés que escribirla con el control.</span></li>
+                <li><span class="bullet num">5</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Iniciá sesión con tu cuenta de Gmail.</strong> Si ya usás Gmail o cualquier servicio de Google, esa misma cuenta te sirve. El Chromecast queda vinculado a tu perfil de Google.</span></li>
+                <li><span class="bullet num">6</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Instalá apps desde la Google Play Store</strong> que aparece directamente en la pantalla del televisor. La selección de apps en Google TV es mucho más amplia que en el Fire TV.</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">🔄 Diferencia clave con el Fire Stick</span>
+                En el Chromecast también podés "castear" contenido desde el celular: si estás mirando algo en YouTube en el teléfono, apretás el ícono de cast y se pasa automáticamente al televisor. En el Fire Stick eso no existe de forma nativa.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 1.5 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué hago si da error al instalar? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/fGVJQWkR/5.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Solución de errores · Los 4 más comunes</span>
+              <p class="faq-text">
+                La mayoría de los errores de instalación tienen solución simple. Estos son los cuatro que aparecen el 95% de las veces:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Error 1 — "Instalación bloqueada" o "Fuente no permitida"</span>
+              <p class="faq-text">El dispositivo no tiene habilitada la instalación desde fuentes externas. Solución: ir a Ajustes → Mi Fire TV (o Seguridad) → Fuentes desconocidas → activar para Downloader específicamente. Cada app de instalación necesita su propio permiso.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Error 2 — La app se instala pero no abre o se cierra sola</span>
+              <p class="faq-text">El APK que descargaste es para celular (Android phone), no para TV. Son archivos diferentes aunque parezcan lo mismo. Solución: buscar específicamente "APK para Android TV" o "APK para Fire TV" en la búsqueda. La versión correcta suele aparecer en la página oficial de la app.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Error 3 — La URL en Downloader no funciona</span>
+              <p class="faq-text">Las URLs de descarga cambian con frecuencia cuando los desarrolladores sacan nuevas versiones. Solución: buscar en Google "[nombre de la app] APK download Android TV" y verificar que el sitio sea el oficial de la app, no un repositorio de terceros.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Error 4 — "No hay suficiente espacio"</span>
+              <p class="faq-text">El Fire TV Stick básico tiene solo 8 GB de almacenamiento interno, y con el sistema operativo ya quedan unos 4-5 GB libres. Solución: desinstalar apps que no uses. En Ajustes → Aplicaciones → podés ver cuánto ocupa cada una y borrar las que no necesitás.</p>
+            </div></div>
+          </div>
+
+          <!-- FAQ 1.6 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué apps instalo primero y en qué orden? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/qYn0n6Yp/6.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps · Orden recomendado</span>
+              <p class="faq-text">
+                El error más común cuando alguien recibe acceso a todo esto es querer instalar todo de una. El resultado: un menú lleno de apps que no sabe usar, y termina viendo siempre las mismas dos. La recomendación es instalar por etapas:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Semana 1 — Las 4 bases</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Pluto TV</strong> — para zapear canales en vivo y ver películas</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Vix</strong> — para series y contenido en español</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Cont.ar</strong> — para noticias argentinas y deportes gratis</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Plex</strong> — como respaldo cuando no encontrás algo en las otras</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Semana 2 en adelante — según lo que te falte</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Tubi</strong> — si manejás inglés, tiene más de 50.000 títulos gratuitos</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">TyC Sports</strong> — para deportes con mayor cobertura</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">YouTube</strong> — ya viene instalado, pero aprendé a usarlo para canales de TV en vivo</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">📋 Regla práctica</span>
+                Antes de instalar una nueva app, preguntate: ¿qué quiero ver que no encuentro en las que ya tengo? Instalá solo cuando tengas esa respuesta clara.
+              </div>
+            </div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         CARD 2 — TODAS LAS APPS
+    ════════════════════════════════════════════ -->
+    <div class="card" onclick="toggleCard(this)">
+      <div class="card-header">
+        <div class="card-label">INGRESA</div>
+        <div class="card-title">TODAS LAS APPS</div>
+        <hr class="card-divider">
+        <div class="card-sub">SMART TV · SIN LIMITES</div>
+        <div class="card-toggle-hint">Ver apps disponibles <span class="arrow-hint">▼</span></div>
+      </div>
+      <div class="faq-panel">
+        <div class="faq-inner">
+
+          <!-- FAQ 2.1 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué es Pluto TV y por qué es la mejor? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/Y4Kh2F0B/7.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps gratuitas · Pluto TV</span>
+              <p class="faq-text">
+                Pluto TV es, para la mayoría de la gente, la mejor app gratuita disponible en este momento. Pertenece a Paramount (el mismo grupo de Paramount Pictures, MTV y Nickelodeon) y lleva más de una década perfeccionando el modelo de "televisión gratuita por internet".
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Qué tiene adentro</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Más de 100 canales en vivo</strong> organizados por categoría: comedias clásicas, crimen real, ciencia ficción, animé, noticias internacionales, deportes de motor, cocina, música.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Catálogo on-demand</strong> con miles de películas y series completas, incluyendo contenido de Paramount Pictures.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Canales en español</strong> específicos para Argentina con telenovelas, películas latinoamericanas y entretenimiento en castellano.</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Dónde funciona</span>
+              <p class="faq-text">Samsung Smart TV, LG Smart TV, Fire TV Stick, Chromecast con Google TV, Android TV, iOS y Android. Es de las pocas apps que funciona incluso en Smart TV de marcas que no usan Android.</p>
+              <div class="faq-tip">
+                <span class="tip-label">💡 Cómo sacarle el máximo provecho</span>
+                La sección de canales en vivo es donde Pluto TV brilla. No la uses como Netflix (buscando algo específico) — úsala como la tele: prendela, elegí un canal que te llame la atención y dejala correr. Esa es la experiencia para la que fue diseñada.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 2.2 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué ofrece Vix gratis y para quién es ideal? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/8WvYCN2/8.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps gratuitas · Vix</span>
+              <p class="faq-text">
+                Vix es la plataforma de streaming en español más grande del mundo — pertenece a TelevisaUnivision, el grupo de medios hispanohablante más importante de América. Su versión gratuita (con publicidad) tiene una cantidad de contenido que la mayoría de las plataformas pagas no alcanzan.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Qué tiene en su versión gratuita</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span>Telenovelas completas — cientos de temporadas de los clásicos mexicanos y latinoamericanos</span></li>
+                <li><span class="bullet check"></span><span>Películas latinoamericanas y de Hollywood dobladas al español</span></li>
+                <li><span class="bullet check"></span><span>Series originales de Vix en español (producción propia)</span></li>
+                <li><span class="bullet check"></span><span>Algunos partidos en vivo de ligas latinoamericanas (México, Honduras, Ecuador)</span></li>
+                <li><span class="bullet check"></span><span>Noticias en español: Univision, Telemundo, CNN en Español</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Para quién es ideal</span>
+              <p class="faq-text">Si en tu casa se habla español y la gente prefiere contenido latinoamericano — novelas, películas de habla hispana, noticias en castellano — Vix es insuperable en el sector gratuito. También es ideal para adultos mayores que prefieren la TV tradicional latinoamericana.</p>
+            </div></div>
+          </div>
+
+          <!-- FAQ 2.3 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué es Plex y cómo lo uso sin complicarme? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/3Y53hXm2/9.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps gratuitas · Plex</span>
+              <p class="faq-text">
+                Plex tiene mala reputación de ser complicado porque tiene una función avanzada — servir como servidor de tu propia colección de videos — que confunde a la gente. Pero eso es completamente opcional. Para lo que nos importa acá, Plex se usa como cualquier otra app de streaming, sin configurar nada.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Lo que tiene gratis sin configurar nada</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span>Miles de películas y series en la sección "Películas y TV" — sin cuenta, sin registro</span></li>
+                <li><span class="bullet check"></span><span>Canales de noticias en vivo: Reuters, DW News, Bloomberg</span></li>
+                <li><span class="bullet check"></span><span>Canales de entretenimiento y documentales en vivo</span></li>
+                <li><span class="bullet check"></span><span>Funciona en absolutamente cualquier dispositivo: Smart TV de cualquier marca, computadora, celular, consola de videojuegos</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">🎯 Para qué sirve Plex en la práctica</span>
+                Usalo como último recurso. Cuando buscás una película y no la encontrás en Pluto TV ni en Vix, abrís Plex. Su catálogo es diferente al de las otras — tiene mucho cine independiente, películas de los 90s y 2000s que ya no están en ningún lado, y documentales de todo tipo. No es el más rico en contenido nuevo, pero complementa perfectamente.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 2.4 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué tiene Cont.ar que no tienen las otras? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/9mtfm4gT/10.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps gratuitas · Cont.ar</span>
+              <p class="faq-text">
+                Cont.ar es la plataforma de streaming del Estado argentino. La opera el Sistema de Medios y Contenidos Públicos del gobierno nacional. No tiene publicidad invasiva, no cobra nada, y tiene algo que ninguna plataforma privada puede ofrecer: <strong style="font-family:Arial Black;font-size:0.9em;">contenido público argentino financiado por el Estado</strong>.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Señales en vivo incluidas</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">TV Pública</strong> — el canal nacional de Argentina en vivo</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Canal Encuentro</strong> — educativo y cultural, documentales de calidad</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Paka Paka</strong> — infantil, contenido argentino para chicos</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">DeporTV</strong> — la joya. Deportes en vivo: fútbol femenino, básquet, vóley, rugby, tenis, atletismo. Completamente gratis y legal.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Tecnópolis TV</strong> — ciencia, tecnología e innovación</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">⚽ Por qué DeporTV cambia todo</span>
+                DeporTV transmite eventos deportivos que normalmente costarían un abono de cable. La Liga de Básquet Argentina (LNB), el Torneo Federal de Fútbol, competencias de vóley y handball de primera división. Si te gustan los deportes más allá del fútbol de primera, DeporTV es irreemplazable.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 2.5 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué combo de apps me recomendás armar? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/KxktrGJZ/11.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps · Combos por perfil</span>
+              <p class="faq-text">No existe un combo único que le funcione a todos. Acá están los tres perfiles más comunes:</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Perfil 1 — Uso general familiar</span>
+              <p class="faq-text" style="margin-bottom:10px;">Pluto TV + Vix + Cont.ar + Plex. Con estas cuatro cubrís entretenimiento, series en español, noticias argentinas, deportes nacionales y películas de todo tipo. Sin pagar un peso.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Perfil 2 — Series y cine en inglés</span>
+              <p class="faq-text" style="margin-bottom:10px;">Pluto TV + Tubi + Plex + Cont.ar. Tubi tiene más de 50.000 títulos en inglés — es la plataforma gratuita más grande del mundo en catálogo — y es ideal si preferís contenido original sin doblar.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Perfil 3 — Foco en deportes</span>
+              <p class="faq-text">Cont.ar con DeporTV + Pluto TV + TyC Sports + YouTube (canales oficiales de clubes y federaciones). Esta combinación cubre deportes nacionales en vivo, resúmenes internacionales y partidos de categorías inferiores o ligas regionales que no consigue ningún canal de cable.</p>
+            </div></div>
+          </div>
+
+          <!-- FAQ 2.6 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿La publicidad de las apps gratuitas es mucha? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/qLdNYY7N/12.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Apps · Publicidad y cómo funciona</span>
+              <p class="faq-text">
+                La publicidad existe, pero es mucho más manejable que la televisión tradicional. Estas son las cantidades reales por plataforma:
+              </p>
+              <ul class="faq-list" style="margin-top:16px;">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Pluto TV:</strong> en los canales en vivo, los cortes son similares a la TV abierta. En el contenido on-demand, suele haber 2-4 tandas de 30-60 segundos por hora.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Vix:</strong> entre 4 y 6 minutos de publicidad por hora de contenido. Es la que más tiene, pero sigue siendo menos que la TV abierta argentina.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Tubi:</strong> publicidad cada 15-20 minutos aproximadamente, cortísima (15-30 segundos por tanda).</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Plex:</strong> muy poca publicidad. Algunos títulos la tienen y otros no.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Cont.ar:</strong> sin publicidad comercial. Al ser pública, no tiene avisos.</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">📌 La lógica del modelo</span>
+                La publicidad es exactamente lo que hace posible que el contenido sea gratuito y legal. Las plataformas cobran a los anunciantes en lugar de cobrarte a vos. Es el mismo modelo de la TV abierta de toda la vida, aplicado al streaming. La diferencia con las apps piratas es que esas son "gratis" pero el precio lo pagás con tu seguridad y los datos de tu dispositivo.
+              </div>
+            </div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         CARD 3 — ACCESO ILIMITADO
+    ════════════════════════════════════════════ -->
+    <div class="card" onclick="toggleCard(this)">
+      <div class="card-header">
+        <div class="card-label" style="color:#fff; font-size:18px; font-weight:900; letter-spacing:0.05em;">ACCESO</div>
+        <div class="card-title" style="font-size: clamp(28px,6vw,40px);">ILIMITADO</div>
+        <hr class="card-divider">
+        <div class="card-sub">APPS OCULTAS · SIN LIMITE</div>
+        <div class="card-toggle-hint">Ver trucos y deportes <span class="arrow-hint">▼</span></div>
+      </div>
+      <div class="faq-panel">
+        <div class="faq-inner">
+
+          <!-- FAQ 3.1 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Dónde veo deportes gratis y legales en Argentina? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/xSXDW79x/13.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Deportes · Guía completa</span>
+              <p class="faq-text">
+                El ecosistema de deportes gratis y legales en Argentina es más grande de lo que la mayoría cree. El problema es que está disperso en varias plataformas y no nadie lo junta en un solo lugar. Acá está todo:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">DeporTV (en Cont.ar) — la opción más subestimada</span>
+              <p class="faq-text" style="margin-bottom:12px;">Canal estatal con transmisiones en vivo que incluyen: Liga Nacional de Básquet (LNB), fútbol femenino de primera división (AFA), Superliga de Vóley, Primera Nacional de Fútbol masculino (segunda categoría), torneos de handball, atletismo, tenis de menor categoría y deportes de combate.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">TyC Sports — app gratuita con señal en vivo</span>
+              <p class="faq-text" style="margin-bottom:12px;">TyC Sports tiene app para Android TV y Fire TV con transmisión en vivo. No todo el contenido está en abierto — algunos partidos requieren que tenés cable — pero eventos importantes a veces se abren de forma gratuita. Vale tenerla instalada.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">YouTube — canales oficiales que la gente no conoce</span>
+              <p class="faq-text" style="margin-bottom:12px;">AFA tiene canal oficial en YouTube con transmisiones en vivo de fútbol femenino. La Liga Argentina de Básquet transmite partidos completos. Federaciones de rugby, handball y tenis transmiten torneos regionales. Buscá el canal oficial de cada deporte o federación.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Vix — ligas latinoamericanas en vivo</span>
+              <p class="faq-text">En su versión gratuita, Vix transmite partidos de la Liga MX (México), Liga de Honduras y ecuatoriana. Si te interesa el fútbol latinoamericano más allá de Argentina, esto es lo único gratuito y legal que lo cubre.</p>
+            </div></div>
+          </div>
+
+          <!-- FAQ 3.2 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Puedo ver fútbol de primera división sin pagar? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/pjW8p5TB/14.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Deportes · Fútbol argentino</span>
+              <p class="faq-text">
+                Esto merece una respuesta honesta, sin vueltas: <strong style="font-family:Arial Black;font-size:0.9em;">la Liga Profesional Argentina, Champions League, NBA y Fórmula 1 están detrás de un pago</strong>. ESPN+/Star+, TNT Sports y la plataforma de la AFA (AFA Play) pagaron cientos de millones de dólares por esos derechos. No hay forma legal de verlos gratis con la regularidad de un suscriptor.
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Lo que SÍ podés ver gratis y legalmente</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span>El Mundial de Fútbol — por ley, en Argentina debe transmitirse en señal abierta (TV Pública y/o ATA)</span></li>
+                <li><span class="bullet check"></span><span>Copa América — misma situación, señal abierta obligatoria</span></li>
+                <li><span class="bullet check"></span><span>Primera Nacional (segunda división) — en DeporTV, Cont.ar</span></li>
+                <li><span class="bullet check"></span><span>Fútbol Femenino AFA — YouTube oficial de AFA + DeporTV</span></li>
+                <li><span class="bullet check"></span><span>Resúmenes y goles — YouTube canales oficiales de ESPN, TyC, AFA</span></li>
+                <li><span class="bullet check"></span><span>Copa Argentina (algunas fases) — TyC Sports app, rondas iniciales suelen ser en abierto</span></li>
+              </ul>
+              <div class="faq-tip">
+                <span class="tip-label">📺 La alternativa inteligente</span>
+                Si seguís la Liga Profesional de cerca, la estrategia más inteligente es usar las pruebas gratuitas de Star+ o Disney+ (que incluye Star+ en Argentina) para los meses de temporada más intensa, y cancelar en los descansos. Combinado con las pruebas rotativas del siguiente FAQ, podés cubrir los momentos clave sin pagar todos los meses.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 3.3 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Cómo uso pruebas gratis sin que me cobren? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/kgwwP1QQ/15.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Plataformas pagas · El método</span>
+              <p class="faq-text">
+                El único error que hace que te cobren en una prueba gratis es no cancelar a tiempo. No es un problema de confianza en la plataforma — es un problema de recordatorio. La solución es un sistema de dos pasos que no falla:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">El sistema de dos pasos</span>
+              <ul class="faq-list">
+                <li><span class="bullet num">1</span><span><strong style="font-family:Arial Black;font-size:0.9em;">El día que te registrás:</strong> anotate en el calendario el día de vencimiento de la prueba y ponéte una alarma 3 días antes. No "cuando venza" — 3 días antes para que tengas margen si algo falla.</span></li>
+                <li><span class="bullet num">2</span><span><strong style="font-family:Arial Black;font-size:0.9em;">Cancelá el mismo día que te registrás</strong> si querés ir a lo seguro. En la mayoría de las plataformas, cuando cancelás durante la prueba no perdés el acceso inmediatamente — el servicio continúa hasta que se vence la prueba. Podés cancelar el día 1 y usarla igual hasta el día 7 o 30.</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">El truco de la tarjeta con saldo cero</span>
+              <p class="faq-text">Algunas personas usan tarjetas virtuales de Mercado Pago o tarjetas prepagas sin saldo para registrarse. Si se olvidan de cancelar, el cobro falla y no les descuentan nada. Cuidado: algunas plataformas (especialmente Apple TV+) cancelan la cuenta si el primer cobro falla y no te dejan usar el servicio. Usá esta técnica solo si conocés bien la plataforma.</p>
+              <div class="faq-tip">
+                <span class="tip-label">⏰ Cómo poner la alarma correctamente</span>
+                En el celular, buscá en el calendario el día de hoy, contá los días de prueba que te dieron (7, 14 o 30), restalos 3 días y ponéle un recordatorio que diga exactamente el nombre de la plataforma y "CANCELAR PRUEBA". La especificidad del recordatorio importa — uno genérico lo ignorás.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 3.4 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Qué plataformas pagas tienen prueba gratis ahora? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/N68jLngk/16.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Plataformas pagas · Pruebas disponibles</span>
+              <p class="faq-text">
+                Las condiciones cambian seguido, así que siempre verificá en el sitio oficial antes de registrarte. Esta es la situación habitual en Argentina:
+              </p>
+              <ul class="faq-list" style="margin-top:16px;">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Paramount+:</strong> suele ofrecer 7 días de prueba. Tiene Paramount Pictures, CBS, MTV, Nickelodeon, Paramount+ Originals y algunos eventos deportivos (UFC, fútbol europeo).</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Apple TV+:</strong> 7 días de prueba. Series y películas originales de producción propia, generalmente de muy buena calidad (Ted Lasso, Severance, Foundation, Slow Horses). Sin contenido de terceros — solo producciones de Apple.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Starzplay / Lionsgate+:</strong> pruebas de 7 días. Buen catálogo de series y cine de Hollywood, fuerte en series de drama y acción.</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Amazon Prime Video:</strong> tiene período de prueba en Argentina. Además del streaming, Prime incluye envíos gratis en Amazon (útil si comprás por ahí). Series como The Boys, Rings of Power, Reacher.</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Las que generalmente NO tienen prueba gratis</span>
+              <p class="faq-text">Netflix, Disney+ y Max (HBO) no ofrecen prueba gratis en Argentina en este momento. Son las tres plataformas más demandadas, y por eso pueden darse el lujo de no necesitar atraerte con un período gratuito.</p>
+              <div class="faq-tip">
+                <span class="tip-label">🔍 Cómo verificar si tienen prueba</span>
+                Entrá al sitio oficial de la plataforma sin estar logueado, hacé clic en "Suscribirse" y fijate si aparece la frase "prueba gratuita" o "free trial" antes de pedirte los datos de pago. Si no aparece esa frase, no tienen prueba activa en ese momento.
+              </div>
+            </div></div>
+          </div>
+
+          <!-- FAQ 3.5 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Por qué no usar apps piratas si parecen funcionar igual? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/wZ3ztrzP/17.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Seguridad · Por qué evitarlas</span>
+              <p class="faq-text">
+                Esta pregunta merece una respuesta sin moralizar — no se trata de si está bien o mal moralmente usar contenido pirata. Se trata de si te conviene estratégicamente, y la respuesta es que no, por razones muy concretas:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Problema 1 — Seguridad real de tu dispositivo</span>
+              <p class="faq-text" style="margin-bottom:12px;">Cuando instalás un APK de una fuente desconocida, instalás lo que quien empaquetó ese archivo decidió incluir. Puede ser solo la app, o puede incluir software adicional que corre en segundo plano. Ese software puede escanear contraseñas guardadas en el dispositivo, usar tu conexión de internet para actividades de terceros, o convertir tu TV en parte de una botnet (una red de dispositivos que trabajan para alguien más sin que lo sepas). No es hipotético — es el modelo de negocio de muchas de estas apps.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Problema 2 — Inestabilidad en el momento que más importa</span>
+              <p class="faq-text" style="margin-bottom:12px;">Las apps piratas dependen de servidores que nadie mantiene de forma profesional. Cuando hay un partido importante o un evento que mucha gente quiere ver, esos servidores colapsan exactamente en ese momento. Sin aviso, sin solución, sin soporte. Las apps legales también tienen fallas, pero tienen equipos de ingeniería cuyo trabajo es mantener el servicio activo.</p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Problema 3 — El argumento más práctico</span>
+              <p class="faq-text">Con Pluto TV + Vix + Cont.ar + Plex cubrís el 80% del contenido que la mayoría de la gente quiere ver. Para el otro 20% — los grandes eventos deportivos, las series nuevas de Netflix — existen las pruebas gratuitas rotativas. El riesgo de las apps piratas no justifica la diferencia de contenido que aportan.</p>
+            </div></div>
+          </div>
+
+          <!-- FAQ 3.6 -->
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(event, this)">¿Puedo rotar entre plataformas pagas mes a mes? <span class="faq-icon">+</span></div>
+            <div class="faq-a"><div class="faq-a-inner">
+              <div class="faq-img-placeholder"><img src="https://i.ibb.co/f3dfw8L/18.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"></div>
+              <span class="faq-tag">Estrategia · Sistema de rotación</span>
+              <p class="faq-text">
+                Sí, es completamente legal y es la estrategia más inteligente si querés acceso a plataformas pagas sin comprometer un presupuesto mensual fijo. La clave es tener un plan:
+              </p>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">Ejemplo de rotación anual</span>
+              <ul class="faq-list">
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Enero:</strong> Paramount+ (prueba o mes) — Copa del mundo de clubes, contenido de fin de año</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Febrero-Marzo:</strong> Apple TV+ (prueba o mes) — serie que te quedó pendiente</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Abril-Mayo:</strong> Amazon Prime Video — finales de temporada, eventos deportivos de UFC</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Junio-Julio:</strong> Disney+ o Star+ — Champions League final, contenido de verano</span></li>
+                <li><span class="bullet check"></span><span><strong style="font-family:Arial Black;font-size:0.9em;">Resto del año:</strong> base gratuita (Pluto TV + Vix + Cont.ar + Plex) sin costo</span></li>
+              </ul>
+              <span class="subtitulo" style="font-family:Arial Black,sans-serif;font-size:11px;font-weight:900;color:#111;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:22px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #dddad2;">La base siempre es gratuita</span>
+              <p class="faq-text">El combo gratuito (Pluto TV + Vix + Cont.ar + Plex) funciona los 12 meses del año sin pagar nada. Las plataformas pagas son un complemento ocasional para cubrir eventos específicos o series que querés ver. No una suscripción permanente.</p>
+              <div class="faq-tip">
+                <span class="tip-label">💳 Sobre las tarjetas prepagas</span>
+                Si usás tarjetas virtuales de Mercado Pago para las pruebas, tené en cuenta que la experiencia varía por plataforma. Paramount+ y Apple TV+ suelen aceptarlas sin problemas. Disney+ a veces las rechaza. Siempre tenés la opción de usar tu tarjeta real y cancelar manualmente — el sistema de recordatorio del FAQ anterior te protege de que te cobren.
+              </div>
+            </div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function revelarCodigo(btn) {
+    const display = document.getElementById('codigo-display');
+    display.textContent = '7 9 1 3 1 0 0';
+    display.style.letterSpacing = '0.15em';
+    btn.querySelector('.label').textContent = 'codigo revelado';
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'default';
+    btn.onclick = null;
+  }
+
+  function toggleCard(card) {
+    card.classList.toggle('open');
+  }
+
+  function toggleFaq(event, qEl) {
+    event.stopPropagation();
+    const item = qEl.parentElement;
+    const wasOpen = item.classList.contains('open');
+    const siblings = item.parentElement.querySelectorAll('.faq-item');
+    siblings.forEach(s => s.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  window.addEventListener('load', () => {
+    document.getElementById('load-text').textContent = "Preparando tu codigo...";
+
+    const pctEl = document.getElementById('load-pct');
+    const duration = 4000;
+    const start = Date.now();
+    const pctInterval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
+      pctEl.textContent = pct + '%';
+      if (pct >= 100) clearInterval(pctInterval);
+    }, 40);
+
+    setTimeout(() => {
+      document.getElementById('loading-screen').classList.add('hide');
+    }, duration);
+  });
+</script>
+
+</body>
+</html>
